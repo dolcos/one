@@ -1,0 +1,61 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcterms="http://purl.org/dc/terms/">
+<rdf:Description rdf:about="http://censo2010.one.gob.do/"><rdf:label><![CDATA[Boleta Censal, IX Censo Nacional de Población y Vivienda 2010]]></rdf:label><dc:title><![CDATA[Boleta Censal, IX Censo Nacional de Población y Vivienda 2010]]></dc:title><dc:creator><![CDATA[Oficina Nacional de Estadística (ONE) República Dominicana]]></dc:creator><dc:format><![CDATA[Imagen, JPEG [image/jpeg]]]></dc:format><dc:type><![CDATA[Documento, Cuestionario [doc/qst]]]></dc:type><dcterms:spatial><![CDATA[República Dominicana [dor]]]></dcterms:spatial><dc:description><![CDATA[La boleta utilizada en el censo consiste en un cuadernillo diseñado para lectura óptica, en el cual se registraron las informaciones del hogar, la vivienda y un número de hasta seis personas.]]></dc:description><dcterms:tableOfContents><![CDATA[Sección I: Ubicación geográfica
+Sección II: Características de la vivienda
+Sección III: Identificación del hogar
+Sección IV: Características del hogar
+Módulo de mortalidad
+Módulo de producción agropecuaria
+Sección V: Lista de personas que conforman el hogar
+Sección VI: Características de las personas que viven habitualmente en el hogar
+Observaciones]]></dcterms:tableOfContents></rdf:Description>
+<rdf:Description rdf:about="Manual del empadronador.pdf"><rdf:label><![CDATA[Manual del empadronador, censo 2010]]></rdf:label><dc:title><![CDATA[Manual del empadronador, censo 2010]]></dc:title><dc:creator><![CDATA[Oficina Nacional de Estadística (ONE)]]></dc:creator><dc:format><![CDATA[Documento, PDF [application/pdf]]]></dc:format><dc:type><![CDATA[Documento, Técnico [doc/tec]]]></dc:type><dcterms:spatial><![CDATA[República Dominicana [dor]]]></dcterms:spatial><dc:description><![CDATA[El manual del empadronador es la guía fundamental del personal de campo que realiza el levantamiento de información del IX Censo de Población y Vivienda, el mismo consta de las pautas generales, así como también de los procedimientos, términos, etc, en fin las herramientas necesarias para un buen desempeño en su función de empadronador.]]></dc:description><dcterms:tableOfContents><![CDATA[Introducción
+1. Elemento básicos relacionados con el censo
+2. El empadronador
+3. Conceptos y definiciones básicas para el empadronador
+4. Técnica de la entrevista
+5. Instrumento de recolección de información
+6. Actividades del empadronador
+7. Procedimientos operativos
+ANEXO 1: Glosario de términos
+ANEXO 2: Formularios de control]]></dcterms:tableOfContents></rdf:Description>
+<rdf:Description rdf:about="Manual del supervisor.pdf"><rdf:label><![CDATA[Manual del supervisor, censo 2010]]></rdf:label><dc:title><![CDATA[Manual del supervisor, censo 2010]]></dc:title><dc:creator><![CDATA[Oficina Nacional de Estadística (ONE)]]></dc:creator><dc:format><![CDATA[Documento, PDF [application/pdf]]]></dc:format><dc:type><![CDATA[Documento, Técnico [doc/tec]]]></dc:type><dcterms:spatial><![CDATA[República Dominicana [dor]]]></dcterms:spatial><dc:description><![CDATA[El manual del supervisor es la guía fundamental del personal que supervisa el trabajo de campo que realiza el empadronador del IX Censo de Población y Vivienda, el mismo consta de las pautas generales, así como también de los procedimientos, documentos de control, términos, etc, en fin las herramientas necesarias para un buen desempeño en su función de supervisor.]]></dc:description><dcterms:tableOfContents><![CDATA[Introducción
+1. Elementos básicos relacionados con el censo
+2. El supervisor censal
+3. Instrumentos de recolección de información y de control del operativo
+4. Procedimientos operativos
+5. Actividad de supervisión al empadronador durante el levantamiento
+6. Evaluación de cobertura y calidad
+7. Reuniones con el encargado de polígono
+8. Entega final de cajas y materiales sobrantes
+ANEXOS
+CNPV 02D -Entrega y devolución de documentos y material censal
+CNPV 04 -Total de viviendas verificadas y empadronadas
+CNPV 05 -Entrega y recepción de boletas por segmento
+CNPV 07 -Entrega y recepción de boletas para revisión en terreno
+CNPV 09 -Reporte de avance del empadronador
+CNPV 013 -Cuestionario de cobertura y calidad]]></dcterms:tableOfContents></rdf:Description>
+<rdf:Description rdf:about="Manual del encargado municipal.pdf"><rdf:label><![CDATA[Manual del encargado municipal]]></rdf:label><dc:title><![CDATA[Manual del encargado municipal]]></dc:title><dc:creator><![CDATA[Oficina Nacional de Estadística (ONE)]]></dc:creator><dc:format><![CDATA[Documento, PDF [application/pdf]]]></dc:format><dc:type><![CDATA[Documento, Técnico [doc/tec]]]></dc:type><dcterms:spatial><![CDATA[República Dominicana [dor]]]></dcterms:spatial><dc:description><![CDATA[El manual del encargado municipal es la guía fundamental del personal que tiene a su cargo un municipio determinado para supervisar del trabajo de campo que tiene a su cargo los encargados de polígono del IX Censo de Población y Vivienda, el mismo consta de las pautas generales, así como también de los procedimientos, documentos de control,esquemas de reuniones, términos, etc, en fin las herramientas necesarias para un buen desempeño en su función de encargado de municipal.]]></dc:description><dcterms:tableOfContents><![CDATA[Introducción
+1. Elementos básicos relacionados con el censo
+2. El encargado municipal censal
+3. Instrumentos de recolección de información y de control del operativo
+4. Planeación del censo en el municipio
+5. Recorrido de reconocimiento del municipio
+6. Consecución de apoyo y promoción del censo
+7. Características requeridas para los locales a utilizarse en el censo
+8. Reclutamiento y selección del personal
+9. Capacitación del personal operativo
+10. Conformación del polígono censal y del área de supervisión
+11. Asignación de áreas de polígonos censales
+12. Recepción y distribución de materiales
+13. Operativo de levantamiento
+14. Informe final]]></dcterms:tableOfContents></rdf:Description>
+<rdf:Description rdf:about="Censo 2010-Utilidad de sus resultados.pdf"><rdf:label><![CDATA[El censo de población y vivienda: utilidad de sus resultados]]></rdf:label><dc:title><![CDATA[El censo de población y vivienda: utilidad de sus resultados]]></dc:title><dc:creator><![CDATA[Oficina Nacional de Estadística (ONE)]]></dc:creator><dc:publisher><![CDATA[Departamento de Censos, Oficina Nacional de Estadística (ONE)]]></dc:publisher><dc:format><![CDATA[Documento, PDF [application/pdf]]]></dc:format><dc:type><![CDATA[Documento, Otro [doc/oth]]]></dc:type><dcterms:spatial><![CDATA[República Dominicana [dor]]]></dcterms:spatial><dc:description><![CDATA[Este es un documento utilizado para el conocimiento y sensibilización de la población sobre la utilidad de los resultados del censo y su aplicación en temas sociales]]></dc:description><dcterms:tableOfContents><![CDATA[1. Información censal para elaborar diagnósticos de población para la toma de decisiones.
+2. Información censal para la toma de decisiones en el comercio y la industria.
+3. Información censal para la producción de conocimiento.
+4. A modo de reflexión final.
+Guía de actividades.]]></dcterms:tableOfContents></rdf:Description>
+<rdf:Description rdf:about="Guia_didactica_para_profesores.pdf"><rdf:label><![CDATA[Guía didáctica para profesores]]></rdf:label><dc:title><![CDATA[Guía didáctica para profesores]]></dc:title><dc:creator><![CDATA[Oficina Nacional de Estadística (ONE)]]></dc:creator><dc:format><![CDATA[Document, PDF [application/pdf]]]></dc:format><dc:type><![CDATA[Document, Other [doc/oth]]]></dc:type><dcterms:spatial><![CDATA[República Dominicana [dor]]]></dcterms:spatial></rdf:Description>
+<rdf:Description rdf:about="MarcoConceptualRepDom.pdf"><rdf:label><![CDATA[Marco conceptual del IX Censo Nacional de Población y Vivienda 2010]]></rdf:label><dc:title><![CDATA[Marco conceptual del IX Censo Nacional de Población y Vivienda 2010]]></dc:title><dc:creator><![CDATA[Oficina Nacional de Estadística (ONE)]]></dc:creator><dc:format><![CDATA[Document, PDF [application/pdf]]]></dc:format><dc:type><![CDATA[Document, Technical [doc/tec]]]></dc:type><dcterms:spatial><![CDATA[República Dominicana [dor]]]></dcterms:spatial></rdf:Description>
+<rdf:Description rdf:about="Manual Encargado polígono.pdf"><rdf:label><![CDATA[Manual del encargado de poligono]]></rdf:label><dc:title><![CDATA[Manual del encargado de poligono]]></dc:title><dc:creator><![CDATA[Oficina Nacional de Estadística (ONE)]]></dc:creator><dc:format><![CDATA[Document, PDF [application/pdf]]]></dc:format><dc:type><![CDATA[Document, Technical [doc/tec]]]></dc:type><dcterms:spatial><![CDATA[República Dominicana [dor]]]></dcterms:spatial></rdf:Description>
+</rdf:RDF>

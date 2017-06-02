@@ -1,6 +1,6 @@
 # Diccionario Redatam CPV2010 #### 
 
-raw <- read_html("http://redatam.one.gob.do/cgibin/RpWebEngine.exe/Dictionary?&BASE=CPV2010&ITEM=DICALL&MAIN=WebServerMain.inl") %>% 
+raw.dicc_cpv2010 <- read_html("http://redatam.one.gob.do/cgibin/RpWebEngine.exe/Dictionary?&BASE=CPV2010&ITEM=DICALL&MAIN=WebServerMain.inl") %>% 
   html_nodes("div") %>%
   html_nodes("td") %>%
   html_nodes("table") %>% 
@@ -14,25 +14,40 @@ raw <- read_html("http://redatam.one.gob.do/cgibin/RpWebEngine.exe/Dictionary?&B
   filter(str_detect(id, "IX Censo de Población y Vivienda 2010 - República Dom") == FALSE) %>% 
   filter(!is.na(as.numeric(id))) %>% 
   filter(entidad != "CPV2010") %>%
-  mutate(entidad = ifelse(str_detect(entidad, "[[:space:]]")==TRUE, NA, entidad),
-         rotulo_entidad = ifelse(is.na(entidad)==TRUE, NA, rotulo_variable),
-         grupo = ifelse(str_detect(grupo, "[[:space:]]")==TRUE, NA, grupo)
-  ) %>% 
-  fill(c(entidad, rotulo_entidad, grupo)) %>% 
-  mutate(grupo = ifelse(entidad %in% c("MORTA", "AGRICOLA", "PECUARIA"), "", grupo)) %>% 
-  filter(nchar(variable) > 1) %>% 
-  dplyr::select(id, entidad, rotulo_entidad, grupo, variable, alias, everything())
+  mutate(entidad = str_replace_all(entidad, "[[:space:]]", ""),
+         grupo = str_replace_all(grupo, "[[:space:]]", "")
+   ) %>%
+  mutate(entidad = ifelse(entidad == "", NA, entidad),
+         rotulo_variable = ifelse(rotulo_variable == "", NA, rotulo_variable),
+         grupo = ifelse(grupo == "", NA, grupo)) %>%
+  fill(c(entidad, rotulo_variable, grupo)) %>% 
+  mutate(grupo = ifelse(entidad %in% c("MORTA", "AGRICOLA", "PECUARIA"), "", grupo),
+         grupo = ifelse(alias =="" & grupo != "UBIGEO" & is.null(grupo)==FALSE, "", 
+                        grupo)) %>% 
+  filter(nchar(variable) > 1)
+  # dplyr::select(id, entidad, variable, rotulo_variable, grupo, alias, everything())
 
 # urls valores variables diccionario ####
 one.catviv <- "http://redatam.one.gob.do/cgibin/RpWebEngine.exe/Dictionary?&BASE=CPV2010&ITEM=DICCATVIV&MAIN=WebServerMain.inl"
 one.cathog <- "http://redatam.one.gob.do/cgibin/RpWebEngine.exe/Dictionary?&BASE=CPV2010&ITEM=DICCATHOG&MAIN=WebServerMain.inl"
 one.catpob <- "http://redatam.one.gob.do/cgibin/RpWebEngine.exe/Dictionary?&BASE=CPV2010&ITEM=DICCATPER&MAIN=WebServerMain.inl"
 
-remDr$open()
+# remDr$open()
+# remDr$navigate(one.catviv)
+# Sys.sleep(30)
+# remDr$close
 
-remDr$navigate(one.catviv)
-Sys.sleep(60)
+saveRDS(raw.dicc_cpv2010, file = "./data/raw_dicc_cpv2010.rds")
 
-remDr$close
+etl.dicc <- raw.dicc_cpv2010 %>%
+  filter(row_number() %in% c(131, 132)) %>% # >= 23
+  # filter(entidad == "HOGAR")
+  mutate(entidad_variable = paste0(entidad, ".", variable)) %>% 
+  dplyr::select(entidad_variable) %>% 
+  distinct()
+
+etl.dicc_ls <- lapply(unname(as.list(as.data.frame(
+  t(etl.dicc)))), 
+  as.character)
 
 # End()
