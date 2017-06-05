@@ -33,7 +33,11 @@ fredatam <- function(var){
   
   remDr$close
   
+  saveRDS(doc.df, file = sprintf("./data/%s.rds", 
+          str_replace(tolower(var), "[[:punct:]]", "_")))
+  
   assign(tolower(var), doc.df)
+
 }
 
 # End()

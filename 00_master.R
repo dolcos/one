@@ -4,6 +4,7 @@
 # zlog <- file("./outs/zlog.log", open="wt")
 # sink(zlog, type = "message")
 source(paste0(funs,      "paquetes.R"))
+source(paste0(funs,      "fredatam.R"))
 source(paste0(funs,      "conexion.R"))
 #try( 
 system.time( source("01_dictionary.R") )
