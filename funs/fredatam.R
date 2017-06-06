@@ -5,7 +5,7 @@ fredatam <- function(var){
   
   remDr$navigate(one.red)
   
-  Sys.sleep(30)
+  Sys.sleep(30 * 0.5)
   webElem <- remDr$findElement(using = 'name', value = "CMDSET")
   webSubm <- remDr$findElement(using = 'name', value = "SUBMIT")
   webElem$getElementAttribute("name")
@@ -13,13 +13,16 @@ fredatam <- function(var){
   webElem$sendKeysToElement(list(query, key = "enter"))
   webSubm$clickElement()
   
-  Sys.sleep(30)
+  Sys.sleep(30 * 10)
   # doc <- htmlParse(remDr$getPageSource()[[1]], encoding = "UTF-8")
   # tb0 <- getNodeSet(doc, "//table")
   doc <- read_html(remDr$getPageSource()[[1]], encoding = "UTF-8") %>% 
     html_nodes("table") %>% 
     html_table(fill = TRUE)
   doc.df <- as.data.frame(doc[[1]])
+  doc.df[2,] <- unlist(lapply(doc.df[2,],
+                              function(x) ifelse(str_detect(x, "[[:digit:]]") == TRUE, 
+                              paste0("X", x), x)))
   names(doc.df) <- tolower(unlist(doc.df[2,]))
   names(doc.df) <- unlist(lapply(names(doc.df), 
                                  function(x) str_replace_all(x, " ", "_")))
