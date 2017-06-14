@@ -40,13 +40,7 @@ one.catpob <- "http://redatam.one.gob.do/cgibin/RpWebEngine.exe/Dictionary?&BASE
 saveRDS(raw.dicc_cpv2010, file = "./data/raw_dicc_cpv2010.rds")
 
 etl.dicc <- raw.dicc_cpv2010 %>%
-  # filter(entidad %in% c("VIVIENDA", "HOGAR", "PERSONA")) %>%
-  filter(entidad %in% c("PERSONA")) %>%
-  filter(variable %in% c("P56B", "P56C",
-                         "P57A", "P57B", "P57C", "P58A", "P58B", "P59", "P60", "P29R0",
-                         "P29R1", "P29R2", "P29R3", "P29R4", "P38AE", "P52R1", "P54R1", 
-                         "P45R1A", "P56T", "P57T", "P39R2", "P38AEST", "CAPECON")) %>% 
-  # filter(!variable %in% c("H35", "P27")) %>% 
+  filter(entidad %in% c("VIVIENDA", "HOGAR", "PERSONA")) %>%
   mutate(entidad_variable = paste0(entidad, ".", variable)) %>% 
   dplyr::select(entidad_variable) %>% 
   distinct()
