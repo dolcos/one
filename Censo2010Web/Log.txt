@@ -1,0 +1,11 @@
+Log (6/18/2017):
+
+-Cambie los tipos de datos de las columnas en la DB.
+
+-Cree indices compuestos en la DB e indices de busqueda (Aunque los queries siguen siendo muy lentos, ya duran menos de 
+1 min)
+
+- Cree el Stored Procedure para traer casi toda la informacion agrupada, con Counts.
+
+- Cree visualizaciones una visualizacion con dc.js, considero usar highcharts.js ahora (lo probaré mañana).
+

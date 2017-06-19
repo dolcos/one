@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<head>
+    {% load static %}
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tether/1.4.0/js/tether.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/queue-async/1.0.7/queue.js"></script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.17/d3.js"></script>
+  <script src="{% static 'lib/js/bootstrap.min.js' %}"></script>
+  <script src="{% static 'lib/js/crossfilter.js' %}"></script>
+  <script src="{% static 'lib/js/keen.min.js' %}"></script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dc/2.1.6/dc.js"></script>
+
+    <style  src="https://cdnjs.cloudflare.com/ajax/libs/dc/2.1.6/dc.css" ></style>
+</head>
+<h1>Grafica Test</h1>
+<style>
+
+    body {
+        font: 10px sans-serif;
+    }
+
+    .axis path,
+    .axis line {
+        fill: none;
+        stroke: #000;
+        shape-rendering: crispEdges;
+    }
+
+    .x.axis path {
+        display: none;
+    }
+
+    .line {
+        fill: none;
+        stroke: steelblue;
+        stroke-width: 1.5px;
+    }
+
+</style>
+<body>
+
+<div id = "region-chart-nd"></div>
+<script>
+        var url = "{% url "INFO_Provincias" %}"
+</script>
+<script>
+    queue()
+        .defer(d3.json, url)
+        .await(makeGraphs);
+
+    function makeGraphs(error,ProvJson) {
+
+        var cross = crossfilter(ProvJson);
+
+        //Dimensions
+        var regionDim = cross.dimension(function(d){return d["Region"]});
+        var provinciaDim = cross.dimension(function(d){return d["Provincia"]});
+        var municipioDim = cross.dimension(function(d){return d["Municipio"]});
+        var distritoDim = cross.dimension(function(d){return d["Distrito"]});
+        var seccionDim = cross.dimension(function(d){return d["Seccion"]});
+        var barrioDim = cross.dimension(function(d){return d["Barrio"]});
+        var cantidadDim = cross.dimension(function(d){return d["Cantidad"]});
+
+        //Data Groups
+
+        var all = cross.groupAll();
+        var byRegion = regionDim.group();
+        var byProvincia = provinciaDim.group();
+        var byMunicipio = municipioDim.group();
+        var byDistrito = distritoDim.group();
+        var bySeccion = seccionDim.group();
+        var byBarrio = barrioDim.group();
+
+        var totalByRegion = regionDim.group().reduceSum(function(d) {
+            return d["Cantidad"];
+        });
+        var totalCantidad = cross.groupAll().reduceSum(function(d) {return d["Cantidad"];});
+
+        console.log(totalByRegion);
+
+        // Graficos
+
+        var ByRegionND = dc.rowChart("#region-chart-nd");
+        /*
+        ByRegionND
+        .width(600)
+        .height(260)
+        .margins({top: 10, right: 50, bottom: 30, left: 50})
+        .dimension(regionDim)
+        .group(totalByRegion)
+        .transitionDuration(500)
+        .x(d3.scale.ordinal().rangeRoundBands([0, 600], .05).domain(regionDim))
+        .xAxisLabel("Region")
+        .yAxis().ticks(5);
+        */
+        ByRegionND
+    .width(600)
+    .height(550)
+    .dimension(regionDim)
+    .group(totalByRegion)
+    .xAxis().ticks(4);
+
+        //
+        dc.renderAll();
+
+    };
+</script>
+</body>
+</html>
