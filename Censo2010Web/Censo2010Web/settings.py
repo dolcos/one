@@ -77,11 +77,11 @@ WSGI_APPLICATION = 'Censo2010Web.wsgi.application'
 
 DATABASES = {
     'default': {
-        'NAME': 'Censo2010ONE',
+        'NAME': 'Nombre de la DB Aqui',
         'ENGINE': 'sql_server.pyodbc',
-        'HOST': 'LAPTOP-TH9VQ1KD',
-        'USER': 'Sirius',
-        'PASSWORD': 'Juan2009',
+        'HOST': 'Servidor de BD Aqui',
+        'USER': 'User Aqui',
+        'PASSWORD': 'Password Aqui',
 
         'OPTIONS': {
             'driver': 'ODBC Driver 13 for SQL Server',
