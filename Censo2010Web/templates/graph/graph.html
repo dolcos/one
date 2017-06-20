@@ -1,8 +1,11 @@
 <!DOCTYPE html>
 <meta charset="utf-8">
 <head>
+
+    <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/dc/2.1.6/dc.css">
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
     {% load static %}
-  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+  <script src="https://code.jquery.com/jquery-3.2.1.js" integrity="sha256-DZAnKJ/6XZ9si04Hgrsxu/8s717jcIzLy3oi35EouyE=" crossorigin="anonymous"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tether/1.4.0/js/tether.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/queue-async/1.0.7/queue.js"></script>
 
@@ -11,48 +14,29 @@
   <script src="{% static 'lib/js/crossfilter.js' %}"></script>
   <script src="{% static 'lib/js/keen.min.js' %}"></script>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/dc/2.1.6/dc.js"></script>
 
-    <style  src="https://cdnjs.cloudflare.com/ajax/libs/dc/2.1.6/dc.css" ></style>
 </head>
 <h1>Grafica Test</h1>
-<style>
-
-    body {
-        font: 10px sans-serif;
-    }
-
-    .axis path,
-    .axis line {
-        fill: none;
-        stroke: #000;
-        shape-rendering: crispEdges;
-    }
-
-    .x.axis path {
-        display: none;
-    }
-
-    .line {
-        fill: none;
-        stroke: steelblue;
-        stroke-width: 1.5px;
-    }
-
-</style>
 <body>
-
-<div id = "region-chart-nd"></div>
+<button id = "Back">Atrás</button>
+<div id = "region-chart"></div>
+<div id = "provincia-chart"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/dc/2.1.6/dc.js"></script>
 <script>
         var url = "{% url "INFO_Provincias" %}"
 </script>
+
+
+
+
 <script>
     queue()
         .defer(d3.json, url)
         .await(makeGraphs);
 
     function makeGraphs(error,ProvJson) {
-
+        $("#Back").hide();
+        $("#provincia-chart").hide();
         var cross = crossfilter(ProvJson);
 
         //Dimensions
@@ -77,13 +61,18 @@
         var totalByRegion = regionDim.group().reduceSum(function(d) {
             return d["Cantidad"];
         });
+
+        var totalByProvincia = provinciaDim.group().reduceSum(function(d) {
+            return d["Cantidad"];
+        });
         var totalCantidad = cross.groupAll().reduceSum(function(d) {return d["Cantidad"];});
 
         console.log(totalByRegion);
 
         // Graficos
 
-        var ByRegionND = dc.rowChart("#region-chart-nd");
+        var ByRegionND = dc.rowChart("#region-chart");
+        var ByProvincia = dc.rowChart("#provincia-chart");
         /*
         ByRegionND
         .width(600)
@@ -97,14 +86,39 @@
         .yAxis().ticks(5);
         */
         ByRegionND
-    .width(600)
-    .height(550)
-    .dimension(regionDim)
-    .group(totalByRegion)
-    .xAxis().ticks(4);
+        .width(600)
+        .height(550)
+        .dimension(regionDim)
+        .group(totalByRegion)
+        .xAxis().ticks(4);
 
-        //
+         ByProvincia
+        .width(600)
+        .height(550)
+        .dimension(provinciaDim)
+        .group(totalByProvincia)
+        .xAxis().ticks(4);
+
+        ByRegionND.addFilterHandler(function (filters, filter) {
+        filters.length = 0; // empty the array
+        filters.push(filter);
+        $("#region-chart").hide(500);
+        provinciaDim.filter(filter);
+        $("#provincia-chart").show(500);
+        $("#Back").show(100);
+
+        return filters
+        });
+
+        $("#Back").click( function (){
+            $("#provincia-chart").hide(500);
+            $("#region-chart").show(500);
+            $("#Back").hide(100);
+        });
+
         dc.renderAll();
+
+
 
     };
 </script>

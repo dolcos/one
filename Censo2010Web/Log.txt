@@ -9,3 +9,10 @@ Log (6/18/2017):
 
 - Cree visualizaciones una visualizacion con dc.js, considero usar highcharts.js ahora (lo probaré mañana).
 
+Log (6/19/2017):
+
+- Highcharts.js no funcionara, usaré un tremendo force con JQuery.
+
+- Agregué un json con el query de prueba, para acelerar el desarrollo.
+
+- Cree un "Drill Down" con filtros, pero necesita muchas mejoras.
