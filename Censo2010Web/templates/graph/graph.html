@@ -14,13 +14,26 @@
   <script src="{% static 'lib/js/crossfilter.js' %}"></script>
   <script src="{% static 'lib/js/keen.min.js' %}"></script>
 
+    <style>
+        .dc-chart g.row text {fill: black;}
+    </style>
 
 </head>
-<h1>Grafica Test</h1>
+<h2>Total Ubicaciones</h2>
 <body>
-<button id = "Back">Atrás</button>
-<div id = "region-chart"></div>
-<div id = "provincia-chart"></div>
+<div id = "row-chart">
+
+    <div id = "region-chart">
+        <div class="row" style="display: inline;">
+            <div class="col-md-6">
+                <h4 id = "Title" style="text-align: center">Región</h4>
+            </div>
+            <div class = "col-md-6">
+                <button id = "Back" class="btn btn-primary pull-right">Atrás</button>
+            </div>
+        </div>
+    </div>
+</div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/dc/2.1.6/dc.js"></script>
 <script>
         var url = "{% url "INFO_Provincias" %}"
@@ -48,6 +61,11 @@
         var barrioDim = cross.dimension(function(d){return d["Barrio"]});
         var cantidadDim = cross.dimension(function(d){return d["Cantidad"]});
 
+         var dimensions = [regionDim,provinciaDim,municipioDim,distritoDim,seccionDim,barrioDim];
+
+        var titulos = ["Región","Provincia","Municipio","Distrito","Sección","Barrio"];
+
+        var filters = [null,null,null,null,null,null];
         //Data Groups
 
         var all = cross.groupAll();
@@ -65,14 +83,29 @@
         var totalByProvincia = provinciaDim.group().reduceSum(function(d) {
             return d["Cantidad"];
         });
+        var totalByMunicipio= municipioDim.group().reduceSum(function(d) {
+            return d["Cantidad"];
+        });
+        var totalByDistrito = distritoDim.group().reduceSum(function(d) {
+            return d["Cantidad"];
+        });
+        var totalBySeccion = seccionDim.group().reduceSum(function(d) {
+            return d["Cantidad"];
+        });
+        var totalByBarrio = barrioDim.group().reduceSum(function(d) {
+            return d["Cantidad"];
+        });
+
+        var values = [totalByRegion,totalByProvincia,totalByMunicipio,totalByDistrito,totalBySeccion,totalByBarrio];
+
         var totalCantidad = cross.groupAll().reduceSum(function(d) {return d["Cantidad"];});
 
         console.log(totalByRegion);
 
         // Graficos
 
-        var ByRegionND = dc.rowChart("#region-chart");
-        var ByProvincia = dc.rowChart("#provincia-chart");
+        var MasterChart = dc.rowChart("#region-chart");
+
         /*
         ByRegionND
         .width(600)
@@ -85,35 +118,77 @@
         .xAxisLabel("Region")
         .yAxis().ticks(5);
         */
-        ByRegionND
+        MasterChart
         .width(600)
         .height(550)
         .dimension(regionDim)
         .group(totalByRegion)
+            .elasticX(true)
         .xAxis().ticks(4);
 
-         ByProvincia
-        .width(600)
-        .height(550)
-        .dimension(provinciaDim)
-        .group(totalByProvincia)
-        .xAxis().ticks(4);
 
-        ByRegionND.addFilterHandler(function (filters, filter) {
-        filters.length = 0; // empty the array
-        filters.push(filter);
-        $("#region-chart").hide(500);
-        provinciaDim.filter(filter);
-        $("#provincia-chart").show(500);
-        $("#Back").show(100);
+        function remove_empty_bins(source_group) {
+            return {
+            all:function () {
+                return source_group.all().filter(function(d) {
+                    return d.value != 0;
+                    });
+                }
+            };
+        }
 
-        return filters
+        var counter = 0;
+        var check = false;
+        var back = false;
+
+
+        MasterChart.on("filtered", function(chart){
+           filter = chart.filters();
+           area = filter[0];
+           filters[counter + 1] = area;
+           currentDim  = dimensions[counter+1];
+            currentDim.filter(area);
+           console.log(currentDim);
+            MasterChart.dimension(currentDim);
+            currentVal = values[counter + 1];
+           MasterChart.group(remove_empty_bins(currentVal));
+
+           if (check == false){
+               check = true;
+               MasterChart.filter(null);
+               counter++
+               if (back == false)
+               {
+                   back = true;
+                   $("#Back").show(100);
+               }
+           }
+           $("#Title").text(titulos[counter]);
+           check = false;
+
         });
 
+
+
+
+
+
         $("#Back").click( function (){
-            $("#provincia-chart").hide(500);
-            $("#region-chart").show(500);
-            $("#Back").hide(100);
+            currentDim = dimensions[counter-1];
+           console.log(currentDim);
+            filter = filters[counter - 1];
+            currentDim.filter(filter);
+            MasterChart.dimension(currentDim);
+            currentVal = values[counter - 1];
+            MasterChart.group(remove_empty_bins(currentVal));
+            MasterChart.render();
+           counter--;
+           $("#Title").text(titulos[counter]);
+           if (counter == 0)
+           {
+               $("#Back").hide(100);
+               back = false;
+           }
         });
 
         dc.renderAll();

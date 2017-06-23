@@ -15,43 +15,52 @@ def graph(request):
     return render(request, 'graph/graph.html')
 
 
+def SP_Info_Ubicacion():
+    """
+         Ejecuta un Stored Procedure en la DB para conseguir informacion agrupada por las distintas ubicaciones Geograficas.
+    """
+    cursor = connection.cursor()
+    result = None
+    try:
+        cursor.execute('EXEC [dbo].[Get_Info_Provincias]')
+        result = cursor.fetchall()
+    finally:
+        cursor.close()
+
+    return result
+
+
+def Crear_JSON(result):
+    # Convierte el result set del query en una lista de diccionarios, por fila.
+    result_list = []
+    for row in result:
+        p = Censo()
+        p.Region = row[0]
+        p.Provincia = row[1]
+        p.Municipio = row[2]
+        p.Distrito = row[3]
+        p.Seccion = row[4]
+        p.Barrio = row[5]
+        p.Cantidad = row[6]
+        result_list.append(dict(Region=p.Region.replace("Región ", ""),
+                                Provincia=p.Provincia.replace("Provincia ", ""),
+                                Municipio=p.Municipio.replace("Municipio ", ""),
+                                Distrito=p.Distrito,
+                                Seccion=p.Seccion.replace("Zona ", "").replace("Sección ", ""),
+                                Barrio=p.Barrio.replace("Paraje ", "").replace("Barrio ", ""),
+                                Cantidad=p.Cantidad))
+        return result_list
 
 def INFO_Provincias(request):
-    """
-     Ejecuta un Stored Procedure en la DB para conseguir informacion agrupada por las distintas ubicaciones Geograficas.
-    """
+
 
     BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
     file_name = BASE_DIR + "\\\static\\\json\\\GeoUbicacion.json"
     if not os.path.isfile(file_name):
 
-        cursor = connection.cursor()
-        result = None
-        try:
-            cursor.execute('EXEC [dbo].[Get_Info_Provincias]')
-            result = cursor.fetchall()
-        finally:
-            cursor.close()
-
-        #Convierte el result set del query en una lista de diccionarios, por fila.
-        result_list = []
-        for  row in result:
-            p = Censo()
-            p.Region = row[0]
-            p.Provincia = row[1]
-            p.Municipio = row[2]
-            p.Distrito = row[3]
-            p.Seccion = row[4]
-            p.Barrio = row[5]
-            p.Cantidad = row[6]
-            result_list.append(dict(Region = p.Region.replace("Región ",""),
-                                    Provincia = p.Provincia.replace("Provincia ",""),
-                                    Municipio = p.Municipio.replace("Municipio ",""),
-                                    Distrito =  p.Distrito,
-                                    Seccion = p.Seccion.replace("Zona ","").replace("Sección ",""),
-                                    Barrio = p.Barrio.replace("Paraje ","").replace("Barrio ",""),
-                                    Cantidad = p.Cantidad))
+        result = SP_Info_Ubicacion()
+        result_list = Crear_JSON(result)
 
         with open(file_name,'w') as jsonout:
             json.dump(result_list,jsonout)
