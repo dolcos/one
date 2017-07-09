@@ -13,20 +13,3 @@ Log (6/19/2017):
 
 - Cree un archivo json estatico con el stored procedure de la informacion agrupada con Counts. Considero usar jsons asi 
   para los graficos del main page, para carga rapida.
-
-
-Log (6/21/2017):
-
-- Hice un tremendo force en javascript, para que dc.js pudiera hacer drill down. 
-
-- Limpie el codigo .js y el archivo views.py, para que sean mas legibles.
-
-- Implemente una función general para el drilldown del grafico.
-
-Log (6/22/2017):
-
-- Implemente el drill up para la grafica en dc.js. Esta vez fue menos forzoso. 
-
-- Limpie un poco el estilo de la página, ya está más presentable.
-
-- Mañana, mirar más la data y crear otro query para la suma de votos por entidad de ubicación? Por pregunta? A ver.

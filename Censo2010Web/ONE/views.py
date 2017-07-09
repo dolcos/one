@@ -5,68 +5,59 @@ from django.db import connections
 from django.db.models import Count
 from django.http import JsonResponse
 from django.shortcuts import render
-
 from .models import Censo
 from django.db import connection
-import json
 import os
+import ujson
+import pandas as pd
+from .CrearJSON import *
+
+
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+file_dir = BASE_DIR + "\\static\\json\\"
+GEOJSON_Directory = file_dir + "GeoJson\\"
 
 def graph(request):
     return render(request, 'graph/graph.html')
 
 
-def SP_Info_Ubicacion():
-    """
-         Ejecuta un Stored Procedure en la DB para conseguir informacion agrupada por las distintas ubicaciones Geograficas.
-    """
-    cursor = connection.cursor()
-    result = None
-    try:
-        cursor.execute('EXEC [dbo].[Get_Info_Provincias]')
-        result = cursor.fetchall()
-    finally:
-        cursor.close()
 
-    return result
+def INFO_Ubicacion(request):
+    data = None
+    ubicacion = request.GET.get('ubicacion')
+    filtro = request.GET.get('filtro')
+    anterior = request.GET.get('anterior')
+
+    file = file_dir + 'Get_Info_' + ubicacion + '.json'
+    data = pd.read_json(file)
+    data = data.to_dict(orient = 'records')
+    return JsonResponse(data, safe=False)
 
 
-def Crear_JSON(result):
-    # Convierte el result set del query en una lista de diccionarios, por fila.
-    result_list = []
-    for row in result:
-        p = Censo()
-        p.Region = row[0]
-        p.Provincia = row[1]
-        p.Municipio = row[2]
-        p.Distrito = row[3]
-        p.Seccion = row[4]
-        p.Barrio = row[5]
-        p.Cantidad = row[6]
-        result_list.append(dict(Region=p.Region.replace("Región ", ""),
-                                Provincia=p.Provincia.replace("Provincia ", ""),
-                                Municipio=p.Municipio.replace("Municipio ", ""),
-                                Distrito=p.Distrito,
-                                Seccion=p.Seccion.replace("Zona ", "").replace("Sección ", ""),
-                                Barrio=p.Barrio.replace("Paraje ", "").replace("Barrio ", ""),
-                                Cantidad=p.Cantidad))
-        return result_list
+
+
+
 
 def INFO_Provincias(request):
 
+    if not os.path.isfile(file_dir + "Get_Info_Region.json"):
+        Crear_Archivos_JSON()
 
-    BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-
-    file_name = BASE_DIR + "\\\static\\\json\\\GeoUbicacion.json"
-    if not os.path.isfile(file_name):
-
-        result = SP_Info_Ubicacion()
-        result_list = Crear_JSON(result)
-
-        with open(file_name,'w') as jsonout:
-            json.dump(result_list,jsonout)
+    if not os.path.isfile(GEOJSON_Directory + "regioncenso2010.geojson"):
+        Crear_GeoJSON()
 
     #Convierte la lista en un JSON para un API.
-    data = None
-    with open(file_name) as f:
-        data = json.loads(f.read())
+    censo_data = None
+    with open(file_dir + "Get_Info_Region.json") as f:
+        censo_data = ujson.loads(f.read())
+
+    geo_data = None
+    with open(GEOJSON_Directory + "regioncenso2010.geojson") as f:
+        geo_data = ujson.loads(f.read())
+
+
+    data = dict( Censo = censo_data,
+                 Geo = geo_data)
+
+
     return JsonResponse(data, safe=False)

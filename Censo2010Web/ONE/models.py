@@ -2,6 +2,7 @@ from django.db import models
 
 # Create your models here.
 class Censo(models.Model):
+    Codigo = models.CharField(max_length=20)
     Region = models.CharField(max_length=100)
     Provincia = models.CharField(max_length = 100)
     Municipio = models.CharField(max_length = 100)

@@ -80,8 +80,8 @@ DATABASES = {
         'NAME': 'Censo2010ONE',
         'ENGINE': 'sql_server.pyodbc',
         'HOST': 'LAPTOP-TH9VQ1KD',
-        'USER': 'USER',
-        'PASSWORD':'PASS',
+        'USER': 'Sirius',
+        'PASSWORD': 'Juan2009',
 
         'OPTIONS': {
             'driver': 'ODBC Driver 13 for SQL Server',

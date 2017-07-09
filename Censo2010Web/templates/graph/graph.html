@@ -3,26 +3,37 @@
 <head>
 
     <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/dc/2.1.6/dc.css">
+    <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.1.0/leaflet.css">
     <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
     {% load static %}
   <script src="https://code.jquery.com/jquery-3.2.1.js" integrity="sha256-DZAnKJ/6XZ9si04Hgrsxu/8s717jcIzLy3oi35EouyE=" crossorigin="anonymous"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tether/1.4.0/js/tether.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/queue-async/1.0.7/queue.js"></script>
+     <script src="https://cdnjs.cloudflare.com/ajax/libs/d3-geo/1.6.4/d3-geo.js"></script>
+
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.17/d3.js"></script>
   <script src="{% static 'lib/js/bootstrap.min.js' %}"></script>
   <script src="{% static 'lib/js/crossfilter.js' %}"></script>
   <script src="{% static 'lib/js/keen.min.js' %}"></script>
+  <script src="{% static 'lib/js/dc.js' %}"></script>
+    <script src="{% static 'lib/js/dc-leaflet.js' %}"></script>
+  <script src="{% static 'lib/js/dc-tooltip-mixin.min.js' %}"></script>
+    <link rel="stylesheet" type="text/css" href="{% static 'lib/css/dc-leaflet-legend.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'lib/css/dc-tooltip-mixin.min.css' %}">
 
     <style>
         .dc-chart g.row text {fill: black;}
     </style>
 
 </head>
-<h2>Total Ubicaciones</h2>
-<body>
+<h2 style="color: white">Total Ubicaciones</h2>
+<body style="background-color: black">
 <div id = "row-chart">
 
+    <div id = "RD-chart">
+
+    </div>
     <div id = "region-chart">
         <div class="row" style="display: inline;">
             <div class="col-md-6">
@@ -33,10 +44,11 @@
             </div>
         </div>
     </div>
+
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/dc/2.1.6/dc.js"></script>
 <script>
-        var url = "{% url "INFO_Provincias" %}"
+            var url = "{% url "INFO_Provincias" %}"
 </script>
 
 
@@ -50,36 +62,34 @@
     function makeGraphs(error,ProvJson) {
         $("#Back").hide();
         $("#provincia-chart").hide();
-        var cross = crossfilter(ProvJson);
+        var geoJson = ProvJson["Geo"];
+        var cross = crossfilter(ProvJson["Censo"]);
 
         //Dimensions
+        console.log(ProvJson["Censo"]["Region"]);
         var regionDim = cross.dimension(function(d){return d["Region"]});
-        var provinciaDim = cross.dimension(function(d){return d["Provincia"]});
-        var municipioDim = cross.dimension(function(d){return d["Municipio"]});
-        var distritoDim = cross.dimension(function(d){return d["Distrito"]});
-        var seccionDim = cross.dimension(function(d){return d["Seccion"]});
-        var barrioDim = cross.dimension(function(d){return d["Barrio"]});
-        var cantidadDim = cross.dimension(function(d){return d["Cantidad"]});
 
-         var dimensions = [regionDim,provinciaDim,municipioDim,distritoDim,seccionDim,barrioDim];
-
-        var titulos = ["Región","Provincia","Municipio","Distrito","Sección","Barrio"];
+        /*
+        var  dimensiones = ["Region","Provincia","Municipio","Distrito","Seccion","Barrio"];
 
         var filters = [null,null,null,null,null,null];
+        var dims = [null,null,null,null,null,null];
         //Data Groups
 
         var all = cross.groupAll();
         var byRegion = regionDim.group();
+    /*
         var byProvincia = provinciaDim.group();
         var byMunicipio = municipioDim.group();
         var byDistrito = distritoDim.group();
         var bySeccion = seccionDim.group();
         var byBarrio = barrioDim.group();
-
+*/
         var totalByRegion = regionDim.group().reduceSum(function(d) {
             return d["Cantidad"];
         });
 
+        /*
         var totalByProvincia = provinciaDim.group().reduceSum(function(d) {
             return d["Cantidad"];
         });
@@ -97,27 +107,32 @@
         });
 
         var values = [totalByRegion,totalByProvincia,totalByMunicipio,totalByDistrito,totalBySeccion,totalByBarrio];
-
-        var totalCantidad = cross.groupAll().reduceSum(function(d) {return d["Cantidad"];});
-
-        console.log(totalByRegion);
-
+*/
+        var max_region = totalByRegion.top(1)[0].value;
+        console.log(max_region);
         // Graficos
 
         var MasterChart = dc.rowChart("#region-chart");
+        var MapChart = dc.geoChoroplethChart("#RD-chart");
 
-        /*
-        ByRegionND
-        .width(600)
-        .height(260)
-        .margins({top: 10, right: 50, bottom: 30, left: 50})
-        .dimension(regionDim)
-        .group(totalByRegion)
-        .transitionDuration(500)
-        .x(d3.scale.ordinal().rangeRoundBands([0, 600], .05).domain(regionDim))
-        .xAxisLabel("Region")
-        .yAxis().ticks(5);
-        */
+
+        MapChart.width(990)
+                    .height(500)
+                    .dimension(regionDim)
+                    .group(totalByRegion)
+                    .colors(d3.scale.quantize().range(
+                        ["#E2F2FF", "#C4E4FF", "#9ED2FF", "#81C5FF", "#6BBAFF", "#51AEFF", "#36A2FF", "#1E96FF", "#0089FF", "#0061B5"]))
+                    .colorDomain([0, max_region])
+                    .colorCalculator(function (d) { return d ? MapChart.colors()(d) : '#ccc'; })
+            .projection(d3.geo.equirectangular().scale(10500).center([-70.40,19.00]))
+                    .overlayGeoJson(geoJson.features, "Region", function (d) {
+                        console.log(d.properties.name);
+                        return d.properties.name;
+                    });
+
+
+
+
         MasterChart
         .width(600)
         .height(550)
@@ -142,32 +157,56 @@
         var back = false;
 
 
-        MasterChart.on("filtered", function(chart){
-           filter = chart.filters();
-           area = filter[0];
-           filters[counter + 1] = area;
-           currentDim  = dimensions[counter+1];
-            currentDim.filter(area);
-           console.log(currentDim);
-            MasterChart.dimension(currentDim);
-            currentVal = values[counter + 1];
-           MasterChart.group(remove_empty_bins(currentVal));
+        function get_dim(dimension, area,dim_anterior){
+            console.log('Dimension' + dimension);
+            if (area == null){
+                console.log(dims[counter+1]);
+                return dims[counter+1]
+            }
+            var dim_url = "{% url 'INFO_Ubicacion'%}?ubicacion=" + dimension + "&filtro=" + area + "&anterior="+ dim_anterior;
+            var dim_json = $.ajax({
+                url: dim_url,
+                async: false,
+                dataType: 'json'
+            }).responseJSON;
 
+            console.log(typeof(dim_json));
+            cross.remove();
+            cross.add(dim_json);
+            var ubicacionDim = cross.dimension(function(d){return d[dimension]? d[dimension]:""});
+            return ubicacionDim
+        }
+
+        MasterChart.on("filtered", function(chart){
+            if (counter + 1 == dimensiones.length)
+            {
+                return;
+            }
+           filter = chart.filters();
+           console.log(filter);
+           area = filter[0];
+           if (area != null) {
+               filters[counter + 1] = area;
+           }
+           currentDim  = get_dim(dimensiones[counter + 1],area,dimensiones[counter]);
+           currentDim.filter(area);
+           MasterChart.dimension(currentDim);
+           currentVal = currentDim.group().reduceSum(function(d) {return d["Cantidad"];});
+           MasterChart.group(remove_empty_bins(currentVal));
            if (check == false){
                check = true;
+               dims[counter + 1] = currentDim;
                MasterChart.filter(null);
-               counter++
+               counter++;
                if (back == false)
                {
                    back = true;
                    $("#Back").show(100);
                }
            }
-           $("#Title").text(titulos[counter]);
+           $("#Title").text(dimensiones[counter]);
            check = false;
-
         });
-
 
 
 
@@ -190,7 +229,6 @@
                back = false;
            }
         });
-
         dc.renderAll();
 
 
