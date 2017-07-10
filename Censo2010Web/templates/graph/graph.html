@@ -66,48 +66,24 @@
         var cross = crossfilter(ProvJson["Censo"]);
 
         //Dimensions
-        console.log(ProvJson["Censo"]["Region"]);
         var regionDim = cross.dimension(function(d){return d["Region"]});
 
-        /*
+
         var  dimensiones = ["Region","Provincia","Municipio","Distrito","Seccion","Barrio"];
 
         var filters = [null,null,null,null,null,null];
         var dims = [null,null,null,null,null,null];
+        var coordenadas = [null,null,null,null,null,null];
         //Data Groups
 
         var all = cross.groupAll();
         var byRegion = regionDim.group();
-    /*
-        var byProvincia = provinciaDim.group();
-        var byMunicipio = municipioDim.group();
-        var byDistrito = distritoDim.group();
-        var bySeccion = seccionDim.group();
-        var byBarrio = barrioDim.group();
-*/
+
         var totalByRegion = regionDim.group().reduceSum(function(d) {
             return d["Cantidad"];
         });
 
-        /*
-        var totalByProvincia = provinciaDim.group().reduceSum(function(d) {
-            return d["Cantidad"];
-        });
-        var totalByMunicipio= municipioDim.group().reduceSum(function(d) {
-            return d["Cantidad"];
-        });
-        var totalByDistrito = distritoDim.group().reduceSum(function(d) {
-            return d["Cantidad"];
-        });
-        var totalBySeccion = seccionDim.group().reduceSum(function(d) {
-            return d["Cantidad"];
-        });
-        var totalByBarrio = barrioDim.group().reduceSum(function(d) {
-            return d["Cantidad"];
-        });
 
-        var values = [totalByRegion,totalByProvincia,totalByMunicipio,totalByDistrito,totalBySeccion,totalByBarrio];
-*/
         var max_region = totalByRegion.top(1)[0].value;
         console.log(max_region);
         // Graficos
@@ -115,6 +91,11 @@
         var MasterChart = dc.rowChart("#region-chart");
         var MapChart = dc.geoChoroplethChart("#RD-chart");
 
+        var base_scale = 10500;
+        var translation = 0;
+
+        var center = d3.geo.centroid(geoJson);
+        console.log(center);
 
         MapChart.width(990)
                     .height(500)
@@ -124,9 +105,8 @@
                         ["#E2F2FF", "#C4E4FF", "#9ED2FF", "#81C5FF", "#6BBAFF", "#51AEFF", "#36A2FF", "#1E96FF", "#0089FF", "#0061B5"]))
                     .colorDomain([0, max_region])
                     .colorCalculator(function (d) { return d ? MapChart.colors()(d) : '#ccc'; })
-            .projection(d3.geo.equirectangular().scale(10500).center([-70.40,19.00]))
+            .projection(d3.geo.equirectangular().scale(base_scale).center(center))
                     .overlayGeoJson(geoJson.features, "Region", function (d) {
-                        console.log(d.properties.name);
                         return d.properties.name;
                     });
 
@@ -157,11 +137,97 @@
         var back = false;
 
 
+        function resetDimensionFilter (dimension) {
+         dimension.filter(null);
+        }
+
+        function resetData(ndx, dimensions) {
+          // Clear all filters from dimensions, because `ndx.remove`
+          // only removes records matching the current filters.
+          dimensions.forEach(resetDimensionFilter);
+
+          // Remove all data from the cross filter
+          ndx.remove();
+        }
+
+        function  get_scale(area){
+             var Coordinates;
+            console.log(area);
+            var features;
+            if (counter == 0)
+                features = geoJson["features"];
+            else
+                features = coordenadas[counter]["features"];
+
+            for (i = 0; i < features.length; i++){
+                if (features[i]["properties"]["name"] == area)
+                {
+                    Coordinates = features[i];
+                }
+            }
+
+            var projection = d3.geo.equirectangular()
+                                .scale(1)
+                                .translate([0, 0]);
+
+            var path = d3.geo.path()
+                .projection(projection);
+
+            var bounds = path.bounds(Coordinates);
+            var scale   = .95 / Math.max((bounds[1][0] - bounds[0][0]) / 990, (bounds[1][1] - bounds[0][1]) / 500);
+            var offset  = [(990 - scale * (bounds[1][0] + bounds[0][0])) / 2, (500 - scale * (bounds[1][1] + bounds[0][1])) / 2];
+
+            console.log(scale);
+            console.log(offset);
+            return [scale,offset];
+        }
+
+        function get_center(area){
+            var Coordinates;
+            console.log(area);
+            var features;
+            if (counter == 0)
+                features = geoJson["features"];
+            else
+                features = coordenadas[counter]["features"];
+
+            for (i = 0; i < features.length; i++){
+                if (features[i]["properties"]["name"] == area)
+                {
+                    Coordinates = features[i];
+                }
+            }
+
+            var minY = 181;
+            var minX = 181;
+            var maxY = -181;
+            var maxX = -181;
+            feature_coordinates = Coordinates["geometry"]["coordinates"][0][0];
+
+            for(j = 0; j < feature_coordinates.length; j++) {
+                    x = feature_coordinates[j][0];
+                    minX = Math.min(x,minX);
+                    maxX = Math.max(x,maxX);
+
+                    y = feature_coordinates[j][1];
+                    minY = Math.min(y,minY);
+                    maxY = Math.max(y,maxY);
+
+            }
+            var centerX = minX + ((maxX - minX) / 2);
+            var centerY = minY + ((maxY - minY) / 2);
+            console.log(centerX);
+            console.log(centerY);
+            return [centerX,centerY]
+        }
+
         function get_dim(dimension, area,dim_anterior){
             console.log('Dimension' + dimension);
+            console.log(area);
             if (area == null){
                 console.log(dims[counter+1]);
-                return dims[counter+1]
+                console.log(coordenadas[counter+1]["features"][0]["properties"]);
+                return [dims[counter+1],coordenadas[counter + 1]];
             }
             var dim_url = "{% url 'INFO_Ubicacion'%}?ubicacion=" + dimension + "&filtro=" + area + "&anterior="+ dim_anterior;
             var dim_json = $.ajax({
@@ -170,14 +236,19 @@
                 dataType: 'json'
             }).responseJSON;
 
+
             console.log(typeof(dim_json));
             cross.remove();
-            cross.add(dim_json);
+            cross = crossfilter(dim_json["Censo"]);
+            cross.add(dim_json["Censo"]);
+            var ubicacion_geoJson = dim_json["Geo"];
+            console.log(ubicacion_geoJson["features"][0]["properties"]);
+            console.log(d3.geo.centroid(ubicacion_geoJson));
             var ubicacionDim = cross.dimension(function(d){return d[dimension]? d[dimension]:""});
-            return ubicacionDim
+            return [ubicacionDim,ubicacion_geoJson];
         }
 
-        MasterChart.on("filtered", function(chart){
+        MapChart.on("filtered", function(chart){
             if (counter + 1 == dimensiones.length)
             {
                 return;
@@ -187,16 +258,39 @@
            area = filter[0];
            if (area != null) {
                filters[counter + 1] = area;
+               //center = get_center(area);
+               map_properties = get_scale(area);
+               base_scale = map_properties[0];
+               translation = map_properties[1];
            }
-           currentDim  = get_dim(dimensiones[counter + 1],area,dimensiones[counter]);
+           ubicacion  = get_dim(dimensiones[counter + 1],area,dimensiones[counter]);
+           currentDim = ubicacion[0];
+           currentCoordinates = ubicacion[1];
            currentDim.filter(area);
-           MasterChart.dimension(currentDim);
+           MapChart.dimension(currentDim);
            currentVal = currentDim.group().reduceSum(function(d) {return d["Cantidad"];});
-           MasterChart.group(remove_empty_bins(currentVal));
+           MapChart.group(currentVal);
            if (check == false){
                check = true;
                dims[counter + 1] = currentDim;
-               MasterChart.filter(null);
+               coordenadas[counter + 1] = currentCoordinates;
+               MapChart.filter(null);
+               //center = d3.geo.centroid(currentCoordinates);
+               var max_ubicacion = currentVal.top(1)[0].value;
+               MapChart
+                   .colors(d3.scale.quantize().range(
+                        ["#E2F2FF","#D4E2FF","#C4E4FF","#8DC2FF","#9ED2FF","#61B5FF","#81C5FF", "#6BBAFF","#410EFF",
+                            "#51AEFF","#2602FF","#36A2FF","#0#86FF","#1E96FF","9079FF","#0089FF", "#0061B5"]))
+                    .colorDomain([0, max_ubicacion])
+                    .colorCalculator(function (d) { return d ? MapChart.colors()(d) : '#ccc'; })
+                   .projection(d3.geo.equirectangular().scale(base_scale).translate(translation))
+                    .overlayGeoJson(coordenadas[counter + 1].features, dimensiones[counter+1], function (d) {
+                        console.log(d.properties.name);
+                        return d.properties.name;
+                    });
+               MapChart.render();
+               MapChart.redraw();
+
                counter++;
                if (back == false)
                {
@@ -204,6 +298,7 @@
                    $("#Back").show(100);
                }
            }
+           console.log(counter);
            $("#Title").text(dimensiones[counter]);
            check = false;
         });

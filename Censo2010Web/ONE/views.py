@@ -28,9 +28,26 @@ def INFO_Ubicacion(request):
     filtro = request.GET.get('filtro')
     anterior = request.GET.get('anterior')
 
-    file = file_dir + 'Get_Info_' + ubicacion + '.json'
-    data = pd.read_json(file)
-    data = data.to_dict(orient = 'records')
+    print(filtro)
+    file = file_dir + ubicacion + "\\Get_Info_" + ubicacion + filtro + ".json"
+
+    print(file)
+    geofile = GEOJSON_Directory + ubicacion + "\\GeoJson" + filtro + ".geojson"
+
+    print(geofile)
+    censo_data = None
+    with open(file) as f:
+        censo_data = ujson.loads(f.read())
+
+    geo_data = None
+    with open(geofile) as f:
+        geo_data = ujson.loads(f.read())
+
+    data = dict(Censo=censo_data,
+                Geo=geo_data)
+
+
+    print(geo_data["features"][0]["properties"])
     return JsonResponse(data, safe=False)
 
 

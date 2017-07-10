@@ -208,7 +208,7 @@ def Crear_GeoJSON():
                                                                       if data["properties"]["CODIGO"] == codigo]
 
                             print("Consiguiendo propiedades de " + sub_ubicaciones_unicas)
-                            geojson_ubicacion.append(Crear_Coordenadas(sub_ubicaciones,
+                            geojson_ubicacion.append(Crear_Coordenadas(sub_ubicaciones_unicas,
                                                                        propiedades_sub_ubicaciones_originales[0]))
 
 
