@@ -24,26 +24,45 @@
 
     <style>
         .dc-chart g.row text {fill: black;}
+
+    .map-area{
+    position:absolute;
+    bottom:0px;
+    left:35%;
+    right:50%;
+    margin-right: -50%;
+}
+
+
     </style>
 
 </head>
-<h2 style="color: white">Total Ubicaciones</h2>
-<body style="background-color: black">
-<div id = "row-chart">
+<body style="background-color: darkslategray">
 
-    <div id = "RD-chart">
-
-    </div>
-    <div id = "region-chart">
-        <div class="row" style="display: inline;">
+<div id = "Cat-chart">
+<div class="row" style="display: inline;">
             <div class="col-md-6">
-                <h4 id = "Title" style="text-align: center">Región</h4>
+                <h4 id = "Cat_Title" style="text-align: center;color: white;display: none">Entidad</h4>
             </div>
             <div class = "col-md-6">
-                <button id = "Back" class="btn btn-primary pull-right">Atrás</button>
+                <button id = "Cat_Back" class="btn btn-primary pull-right" style="display: None;">Atrás</button>
+            </div>
+        </div>
+</div>
+
+<div id = "row-chart">
+  <div class="map-area">
+    <div id = "RD-chart">
+         <div class="row" style="display: inline;">
+            <div class="col-md-6">
+                <h4 id = "Title" style="text-align: center;color: white;display: none">Región</h4>
+            </div>
+            <div class = "col-md-6">
+                <button id = "Back" class="btn btn-primary pull-right" style="display: None;">Subir</button>
             </div>
         </div>
     </div>
+  </div>
 
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/dc/2.1.6/dc.js"></script>
@@ -55,74 +74,370 @@
 
 
 <script>
-    queue()
+    var cross =
+
+  $(document).ready( function(){
+      var control = new Controller();
+      queue()
         .defer(d3.json, url)
-        .await(makeGraphs);
+        .await(control.makeGraphs);
 
-    function makeGraphs(error,ProvJson) {
-        $("#Back").hide();
-        $("#provincia-chart").hide();
-        var geoJson = ProvJson["Geo"];
-        var cross = crossfilter(ProvJson["Censo"]);
+    function Controller(){
 
-        //Dimensions
-        var regionDim = cross.dimension(function(d){return d["Region"]});
+       this.makeGraphs =  function(error,ProvJson) {
+           //TODO Refactoring de todo esto :I
 
+            $("#Back").hide();
+            $("#Title").show();
+            $("#main-navbar").show();
 
-        var  dimensiones = ["Region","Provincia","Municipio","Distrito","Seccion","Barrio"];
-
-        var filters = [null,null,null,null,null,null];
-        var dims = [null,null,null,null,null,null];
-        var coordenadas = [null,null,null,null,null,null];
-        //Data Groups
-
-        var all = cross.groupAll();
-        var byRegion = regionDim.group();
-
-        var totalByRegion = regionDim.group().reduceSum(function(d) {
-            return d["Cantidad"];
-        });
+            //JSON de datos geograficos y datos del censo.
+            var cross = crossfilter(ProvJson["Censo"]);
+            var geoJson = ProvJson["Geo"];
+            //Dimensions
 
 
-        var max_region = totalByRegion.top(1)[0].value;
-        console.log(max_region);
-        // Graficos
+            function Create_CatDims(cross) {
+                //Funcion que recrea los datos de la dimension de Categorias.
+                // Esta se ejecuta cada vez que cambia el mapa.
 
-        var MasterChart = dc.rowChart("#region-chart");
-        var MapChart = dc.geoChoroplethChart("#RD-chart");
+                var entidadDim = cross.dimension(function (d) {
+                    return d["Entidad"]
+                });
+                var grupoDim = cross.dimension(function (d) {
+                    return d["Grupo"]
+                });
+                var preguntaDim = cross.dimension(function (d) {
+                    return d["Pregunta"]
+                });
+                var respuestaDim = cross.dimension(function (d) {
+                    return d["Respuesta"]
+                });
 
-        var base_scale = 10500;
-        var translation = 0;
+                return [entidadDim,grupoDim,preguntaDim,respuestaDim]
+            }
 
-        var center = d3.geo.centroid(geoJson);
-        console.log(center);
-
-        MapChart.width(990)
-                    .height(500)
-                    .dimension(regionDim)
-                    .group(totalByRegion)
-                    .colors(d3.scale.quantize().range(
-                        ["#E2F2FF", "#C4E4FF", "#9ED2FF", "#81C5FF", "#6BBAFF", "#51AEFF", "#36A2FF", "#1E96FF", "#0089FF", "#0061B5"]))
-                    .colorDomain([0, max_region])
-                    .colorCalculator(function (d) { return d ? MapChart.colors()(d) : '#ccc'; })
-            .projection(d3.geo.equirectangular().scale(base_scale).center(center))
-                    .overlayGeoJson(geoJson.features, "Region", function (d) {
-                        return d.properties.name;
-                    });
+            //Dimension inicial.
+            var regionDim = cross.dimension(function (d) {
+                    return d["Region"]
+                });
 
 
 
+            //Dimensiones y Categorias posibles.
+            var  dimensiones = ["Region","Provincia","Municipio","Distrito","Seccion","Barrio"];
+            var categorias =["Entidad","Grupo","Pregunta","Respuesta"];
 
-        MasterChart
-        .width(600)
-        .height(550)
-        .dimension(regionDim)
-        .group(totalByRegion)
-            .elasticX(true)
+
+            //Arreglos que guardan los estados del mapa al ir bajando o subiendo de dimension.
+           //TODO Verificar cuales de estos son verdaderamente necesarios.
+            var filters = ["RD",null,null,null,null,null];
+            var dims = [null,null,null,null,null,null];
+            var coordenadas = [null,null,null,null,null,null];
+            var map_properties = [null,null,null,null,null,null];
+
+            //Dimensiones de las categorias.
+            var cat_dims = Create_CatDims(cross);
+            var cat_filters = [cat_dims[0],null,null,null];
+            //Data Groups
+            dims[0] = regionDim;
+            coordenadas[0] = geoJson;
+
+            //Cantidades originales.
+            var totalByRegion = regionDim.group().reduceSum(function(d) {
+                return d["Cantidad"];
+            });
+
+            var totalEntidad = cat_dims[0].group().reduceSum(function (d) {
+                return d["Cantidad"];
+            });
+            var max_region = totalByRegion.top(1)[0].value;
+            // Graficos
+
+            //Los dos charts visibles en la pagina.
+            var CategoriaChart = dc.rowChart("#Cat-chart");
+            var MapChart = dc.geoChoroplethChart("#RD-chart");
+
+
+
+            CategoriaChart
+        .width(400)
+        .height(350)
+        .dimension(cat_dims[0])
+        .group(totalEntidad)
+                .elasticX(true) // Esto es lo que hace que la axis X se actualice automaticamente.
         .xAxis().ticks(4);
 
 
-        function remove_empty_bins(source_group) {
+            var mapHeight = 500;
+            var mapWidth = 900;
+
+            //Formula de proyeccion. Equivalente al get_scale mas abajo.
+            //TODO Se puede borrar esto y utilizar la  funcion get_scale?
+
+            var projection = d3.geo.equirectangular()
+                                    .scale(1)
+                                    .translate([0, 0]);
+
+            var path = d3.geo.path()
+                    .projection(projection);
+
+            var bounds = path.bounds(geoJson);
+            var scale   = .95 / Math.max((bounds[1][0] - bounds[0][0]) / mapWidth, (bounds[1][1] - bounds[0][1]) / mapHeight);
+            var offset  = [(mapWidth - scale * (bounds[1][0] + bounds[0][0])) / 2, (mapHeight - scale * (bounds[1][1] + bounds[0][1])) / 2];
+            map_properties[0] = [scale,offset];
+
+            //Propiedades del mapa.
+            MapChart.width(mapWidth)
+                        .height(mapHeight)
+                        .dimension(regionDim)
+                        .group(totalByRegion)
+                        .colors(d3.scale.quantize().range(
+                            ["#E2F2FF","#D4E2FF","#C4E4FF","#8DC2FF","#9ED2FF","#61B5FF","#81C5FF", "#6BBAFF","#53afff",
+                                "#51AEFF","#61AEFF","#36A2FF","#0#86FF","#1E96FF","9079FF","#0089FF", "#0061B5"]))
+                        .colorDomain([0, max_region])
+                        .colorCalculator(function (d) { return d ? MapChart.colors()(d) : '#ccc'; })
+                .projection(d3.geo.equirectangular().scale(scale).translate(offset))
+                .legend(dc.legend().x(250).y(100)) //TODO que funcione la bendita leyenda.
+                .overlayGeoJson(geoJson.features, "Region", function (d) {
+                            return d.properties.name;
+                            });
+
+
+            //Variables de control de acceso a los mapas.
+            var category_count = 0;
+            var counter = 0;
+            var check = false;
+            var cat_check = false;
+            var back = false;
+            var cat_back = false;
+
+            function invalid_area(area)
+            {
+                //Failsafe para que no pase nada si el usuario hace clic en un area del mapa en gris.
+                group = dims[counter].group().reduceSum(function(d) {return d["Cantidad"];});
+                group_names = group.top(Infinity);
+                for (i = 0; i < group_names.length; i++)
+                {
+                    if(group_names[i].key == area)
+                        return false;
+                }
+                return true;
+            }
+
+
+            function  get_scale(area){
+                //Ajusta el mapa para que haga "zoom"  al area seleccionada en particular.
+
+                 var Coordinates;
+                var features;
+                if (counter == 0)
+                    features = geoJson["features"];
+                else
+                    features = coordenadas[counter]["features"];
+
+                for (i = 0; i < features.length; i++){
+                    if (features[i]["properties"]["name"] == area)
+                    {
+                        Coordinates = features[i];
+                    }
+                }
+
+                //Proyeccion base que se utiliza para el calculo de la nueva proyeccion.
+                var projection = d3.geo.equirectangular()
+                                    .scale(1)
+                                    .translate([0, 0]);
+
+                var path = d3.geo.path()
+                    .projection(projection);
+
+                //Encuentra los limites de longitud y latitud de las coordenadas.
+                var bounds = path.bounds(Coordinates);
+                //La escala representada sera la distancia mayor, vertical u horizontal.
+                var scale   = .95 / Math.max((bounds[1][0] - bounds[0][0]) / mapWidth, (bounds[1][1] - bounds[0][1]) / mapHeight);
+                // La traduccion de la escala en base a los parametros del mapa.
+                var offset  = [(mapWidth - scale * (bounds[1][0] + bounds[0][0])) / 2, (mapHeight - scale * (bounds[1][1] + bounds[0][1])) / 2];
+
+
+                map_properties[counter + 1] = [scale, offset];
+                return [scale,offset];
+            }
+
+
+            // La parte fea viene ahora.
+            function get_dim(dimension, area){
+                // Funcion que consigue la dimension actual.
+                if (area == null){
+                    // Si el filtro fue nulo, retorna la informacion guardada.
+                    return [dims[counter+1],coordenadas[counter + 1],cat_dims[category_count]];
+                }
+                var dim_url = "{% url 'INFO_Ubicacion'%}?ubicacion=" + dimension + "&filtro=" + area;
+                var dim_json;
+
+                //TODO hacer que esto sea asyncrono. Haciendo un await en una funcion que haga una animacion de "zoom".
+                //TODO La funcion de animacion del zoom.
+                //Llama al API dentro de views para conseguir el JSON.
+                dim_json = $.ajax({
+                    url: dim_url,
+                    async: false,
+                    dataType: 'json'
+                }).responseJSON;
+
+                //Crea de nuevo un crossfilter con los nuevos datos. Feo, pero necesario.
+                cross = crossfilter(dim_json["Censo"]);
+                cross.add(dim_json["Censo"]);
+
+                cat_filters[category_count] = CategoriaChart.group();
+                var ubicacion_geoJson = dim_json["Geo"];
+                //Crea una nueva dimension basada en la ubicacion corriente.
+                var ubicacionDim = cross.dimension(function(d){return d[dimension]? d[dimension]:""});
+
+                cat_dims = Create_CatDims(cross);
+                return [ubicacionDim,ubicacion_geoJson,cat_dims[category_count]];
+            }
+
+            MapChart.on("filtered", function(chart){
+                if (counter + 1 == dimensiones.length )
+                {
+                    // Si llegamos  a Barrio, solo filtra.
+                    return;
+                }
+                //Extrae la ubicacion seleccionada como filtro.
+               filter = chart.filters();
+               area = filter[0];
+               if(invalid_area(area))
+               {
+                   if(area != null)
+                        MapChart.filter(null);
+                   return;
+               }
+
+               if (area != null) {
+                   //Consigue las nuevas propiedades de rendering del mapa.
+                   filters[counter + 1] = area;
+                   properties = get_scale(area);
+                   base_scale = properties[0];
+                   translation = properties[1];
+               }
+
+
+               ubicacion  = get_dim(dimensiones[counter + 1],area);
+               currentDim = ubicacion[0];
+               currentCoordinates = ubicacion[1];
+               currentCat = ubicacion[2];
+
+               //Filtrar y Reemplazar los datos corrientes del mapa.
+               currentDim.filter(area);
+               MapChart.dimension(currentDim);
+               currentVal = currentDim.group().reduceSum(function(d) {return d["Cantidad"];});
+               MapChart.group(currentVal);
+
+
+
+               if (check == false){
+                   //Force para que el mapa no se quede en gris al ser seleccionado.
+                   // Es la parte clave del drilldown, drillup.
+                   check = true;
+                   //Guarda los filtros corrientes en arreglos y elimina el filtro que existe en la visualizacion.
+                   dims[counter + 1] = currentDim;
+                   coordenadas[counter + 1] = currentCoordinates;
+                   cat_dims[category_count] = currentCat;
+                   MapChart.filter(null);
+
+
+                   //Reemplazar los valores en el chart de las categorias.
+                   CategoriaChart.dimension(currentCat);
+                   CatVal = currentCat.group().reduceSum(function(d) {return d["Cantidad"];});
+                   CategoriaChart.group(remove_empty_bins(CatVal));
+                   if (category_count > 0) {
+                       //Force para que los filtros del chart de categorias se mantengan iguales cuando el mapa cambie.
+                       tCat = cat_dims[category_count-1];
+                       CategoriaChart.dimension(tCat);
+                       CatVal = tCat.group().reduceSum(function(d) {return d["Cantidad"];});
+                       CategoriaChart.group(remove_empty_bins(CatVal));
+                       category_count--;
+                       CategoriaChart.filter([cat_filters[category_count + 1]]);
+                   }
+
+                   //Actualizar las propiedades del mapa.
+                   var max_ubicacion = CatVal.top(1)[0].value;
+                   MapChart
+                        .colorDomain([0, max_ubicacion])
+                        .colorCalculator(function (d) { return d ? MapChart.colors()(d) : '#ccc'; })
+                       .projection(d3.geo.equirectangular().scale(base_scale).translate(translation))
+                        .overlayGeoJson(currentCoordinates.features, dimensiones[counter+1], function (d) {
+                            return d.properties.name;
+                        });
+                   MapChart.render();
+                   MapChart.redraw();
+
+                   counter++;
+                   if (back == false)
+                   {
+                       back = true;
+                       $("#Back").show(100);
+                   }
+               }
+               $("#Title").text(dimensiones[counter]);
+               check = false;
+            });
+
+            $("#Back").click( function (){
+                //Esto hace el drill up, sube una dimension del mapa.
+
+                counter--;
+                filter = filters[counter];
+                currentDim = dims[counter];
+
+
+                currentCoordinates = coordenadas[counter];
+                MapChart.dimension(currentDim);
+                currentVal = currentDim.group().reduceSum(function(d) {return d["Cantidad"];});
+                MapChart.group(currentVal);
+                MapChart.removeGeoJson(dimensiones[counter + 1]);
+
+
+                //TODO hacer el milagro de que los filtros de categoria cambien al hacer drillup.
+                CategoriaChart.dimension(cat_dims[0]);
+                CategoriaChart.group(cat_filters[0]);
+                CategoriaChart.render();
+                CategoriaChart.redraw();
+
+
+                properties = map_properties[counter];
+                base_scale = properties[0];
+                translation = properties[1];
+
+
+                 var max_ubicacion = currentVal.top(1)[0].value;
+
+                 MapChart
+                        .colorDomain([0, max_ubicacion])
+                        .colorCalculator(function (d) { return d ? MapChart.colors()(d) : '#ccc'; })
+                       .projection(d3.geo.equirectangular().scale(base_scale).translate(translation))
+                        .overlayGeoJson(currentCoordinates.features, dimensiones[counter], function (d) {
+                            return d.properties.name;
+                        });
+
+
+                 MapChart.render();
+                 MapChart.redraw();
+
+                 console.log(CategoriaChart.dimension().top(Infinity));
+                console.log(CategoriaChart.group().all());
+               if (counter == 0)
+               {
+                   $("#Back").hide(100);
+                   back = false;
+               }
+               $("#Title").text(dimensiones[counter]);
+
+            });
+
+
+           cat_check = false;
+
+            function remove_empty_bins(source_group) {
             return {
             all:function () {
                 return source_group.all().filter(function(d) {
@@ -132,203 +447,83 @@
             };
         }
 
-        var counter = 0;
-        var check = false;
-        var back = false;
 
 
-        function resetDimensionFilter (dimension) {
-         dimension.filter(null);
-        }
-
-        function resetData(ndx, dimensions) {
-          // Clear all filters from dimensions, because `ndx.remove`
-          // only removes records matching the current filters.
-          dimensions.forEach(resetDimensionFilter);
-
-          // Remove all data from the cross filter
-          ndx.remove();
-        }
-
-        function  get_scale(area){
-             var Coordinates;
-            console.log(area);
-            var features;
-            if (counter == 0)
-                features = geoJson["features"];
-            else
-                features = coordenadas[counter]["features"];
-
-            for (i = 0; i < features.length; i++){
-                if (features[i]["properties"]["name"] == area)
+            // Mas o menos lo mismo pero para el chart de categorias.
+           CategoriaChart.on("filtered", function(chart){
+               if (category_count + 1 == categorias.length )
                 {
-                    Coordinates = features[i];
+                    var max_cat = MapChart.group().top(1)[0].value;
+                   MapChart
+                            .colorDomain([0, max_cat])
+                   .colorCalculator(function (d) { return d ? MapChart.colors()(d) : '#ccc'; });
+                    return;
                 }
-            }
+               filter = chart.filters();
+               area = filter[0];
+               catDim = cat_dims[category_count+1];
+               catDim.filter(area);
+               catVal = catDim.group().reduceSum(function(d) {return d["Cantidad"];});
+               chart.dimension(catDim);
+               chart.group(remove_empty_bins(catVal));
 
-            var projection = d3.geo.equirectangular()
-                                .scale(1)
-                                .translate([0, 0]);
+               if (cat_check == false){
+                   cat_check = true;
+                   cat_filters[category_count + 1] = area;
+                   cat_dims[category_count + 1] = catDim;
+                   chart.filter(null);
+                   var max_cat = MapChart.group().top(1)[0].value;
+                   MapChart
+                            .colorDomain([0, max_cat])
+                   .colorCalculator(function (d) { return d ? MapChart.colors()(d) : '#ccc'; });
 
-            var path = d3.geo.path()
-                .projection(projection);
+                   MapChart.render();
+                   MapChart.redraw();
 
-            var bounds = path.bounds(Coordinates);
-            var scale   = .95 / Math.max((bounds[1][0] - bounds[0][0]) / 990, (bounds[1][1] - bounds[0][1]) / 500);
-            var offset  = [(990 - scale * (bounds[1][0] + bounds[0][0])) / 2, (500 - scale * (bounds[1][1] + bounds[0][1])) / 2];
+                   category_count++;
 
-            console.log(scale);
-            console.log(offset);
-            return [scale,offset];
-        }
-
-        function get_center(area){
-            var Coordinates;
-            console.log(area);
-            var features;
-            if (counter == 0)
-                features = geoJson["features"];
-            else
-                features = coordenadas[counter]["features"];
-
-            for (i = 0; i < features.length; i++){
-                if (features[i]["properties"]["name"] == area)
-                {
-                    Coordinates = features[i];
-                }
-            }
-
-            var minY = 181;
-            var minX = 181;
-            var maxY = -181;
-            var maxX = -181;
-            feature_coordinates = Coordinates["geometry"]["coordinates"][0][0];
-
-            for(j = 0; j < feature_coordinates.length; j++) {
-                    x = feature_coordinates[j][0];
-                    minX = Math.min(x,minX);
-                    maxX = Math.max(x,maxX);
-
-                    y = feature_coordinates[j][1];
-                    minY = Math.min(y,minY);
-                    maxY = Math.max(y,maxY);
-
-            }
-            var centerX = minX + ((maxX - minX) / 2);
-            var centerY = minY + ((maxY - minY) / 2);
-            console.log(centerX);
-            console.log(centerY);
-            return [centerX,centerY]
-        }
-
-        function get_dim(dimension, area,dim_anterior){
-            console.log('Dimension' + dimension);
-            console.log(area);
-            if (area == null){
-                console.log(dims[counter+1]);
-                console.log(coordenadas[counter+1]["features"][0]["properties"]);
-                return [dims[counter+1],coordenadas[counter + 1]];
-            }
-            var dim_url = "{% url 'INFO_Ubicacion'%}?ubicacion=" + dimension + "&filtro=" + area + "&anterior="+ dim_anterior;
-            var dim_json = $.ajax({
-                url: dim_url,
-                async: false,
-                dataType: 'json'
-            }).responseJSON;
-
-
-            console.log(typeof(dim_json));
-            cross.remove();
-            cross = crossfilter(dim_json["Censo"]);
-            cross.add(dim_json["Censo"]);
-            var ubicacion_geoJson = dim_json["Geo"];
-            console.log(ubicacion_geoJson["features"][0]["properties"]);
-            console.log(d3.geo.centroid(ubicacion_geoJson));
-            var ubicacionDim = cross.dimension(function(d){return d[dimension]? d[dimension]:""});
-            return [ubicacionDim,ubicacion_geoJson];
-        }
-
-        MapChart.on("filtered", function(chart){
-            if (counter + 1 == dimensiones.length)
-            {
-                return;
-            }
-           filter = chart.filters();
-           console.log(filter);
-           area = filter[0];
-           if (area != null) {
-               filters[counter + 1] = area;
-               //center = get_center(area);
-               map_properties = get_scale(area);
-               base_scale = map_properties[0];
-               translation = map_properties[1];
-           }
-           ubicacion  = get_dim(dimensiones[counter + 1],area,dimensiones[counter]);
-           currentDim = ubicacion[0];
-           currentCoordinates = ubicacion[1];
-           currentDim.filter(area);
-           MapChart.dimension(currentDim);
-           currentVal = currentDim.group().reduceSum(function(d) {return d["Cantidad"];});
-           MapChart.group(currentVal);
-           if (check == false){
-               check = true;
-               dims[counter + 1] = currentDim;
-               coordenadas[counter + 1] = currentCoordinates;
-               MapChart.filter(null);
-               //center = d3.geo.centroid(currentCoordinates);
-               var max_ubicacion = currentVal.top(1)[0].value;
-               MapChart
-                   .colors(d3.scale.quantize().range(
-                        ["#E2F2FF","#D4E2FF","#C4E4FF","#8DC2FF","#9ED2FF","#61B5FF","#81C5FF", "#6BBAFF","#410EFF",
-                            "#51AEFF","#2602FF","#36A2FF","#0#86FF","#1E96FF","9079FF","#0089FF", "#0061B5"]))
-                    .colorDomain([0, max_ubicacion])
-                    .colorCalculator(function (d) { return d ? MapChart.colors()(d) : '#ccc'; })
-                   .projection(d3.geo.equirectangular().scale(base_scale).translate(translation))
-                    .overlayGeoJson(coordenadas[counter + 1].features, dimensiones[counter+1], function (d) {
-                        console.log(d.properties.name);
-                        return d.properties.name;
-                    });
-               MapChart.render();
-               MapChart.redraw();
-
-               counter++;
-               if (back == false)
-               {
-                   back = true;
-                   $("#Back").show(100);
+                   if (cat_back == false)
+                   {
+                       cat_back = true;
+                       $("#Cat_Back").show(100);
+                   }
+                   $("#Cat_Title").text(dimensiones[category_count]);
                }
-           }
-           console.log(counter);
-           $("#Title").text(dimensiones[counter]);
-           check = false;
-        });
+               cat_check = false;
+
+            });
+
+             $("#Cat_Back").click( function (){
+                category_count--;
+
+                filter = cat_filters[category_count];
+                categoria = categorias[category_count];
+                currentDim = cat_dims[category_count];
+                currentDim.filter(null);
+                CategoriaChart.dimension(currentDim);
+                currentVal = currentDim.group().reduceSum(function(d) {return d["Cantidad"];});
+                CategoriaChart.group(remove_empty_bins(currentVal));
+                var max_ubicacion = currentVal.top(1)[0].value;
+
+                 MapChart
+                        .colorDomain([0, max_ubicacion])
+                        .colorCalculator(function (d) { return d ? MapChart.colors()(d) : '#ccc'; });
 
 
+                 dc.renderAll();
+                 dc.redrawAll();
+               if (category_count == 0)
+               {
+                   $("#Cat_Back").hide(100);
+                   cat_back = false;
+               }
+               $("#Cat_Title").text(categorias[category_count]);
+            });
+             dc.renderAll();
+        }
+    }
+  });
 
-
-
-        $("#Back").click( function (){
-            currentDim = dimensions[counter-1];
-           console.log(currentDim);
-            filter = filters[counter - 1];
-            currentDim.filter(filter);
-            MasterChart.dimension(currentDim);
-            currentVal = values[counter - 1];
-            MasterChart.group(remove_empty_bins(currentVal));
-            MasterChart.render();
-           counter--;
-           $("#Title").text(titulos[counter]);
-           if (counter == 0)
-           {
-               $("#Back").hide(100);
-               back = false;
-           }
-        });
-        dc.renderAll();
-
-
-
-    };
 </script>
 </body>
 </html>

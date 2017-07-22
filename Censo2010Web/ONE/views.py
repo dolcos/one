@@ -23,18 +23,26 @@ def graph(request):
 
 
 def INFO_Ubicacion(request):
+    """
+    Funcion para buscar entre los directorios los archivos que cumplen con los filtros pasados desde el Front End.
+    :param request: Contiene la ubicacion y filtro.
+    :return: Un JSON con los datos del censo pertenecientes a ese filtro y los datos geograficos.
+    """
     data = None
     ubicacion = request.GET.get('ubicacion')
     filtro = request.GET.get('filtro')
-    anterior = request.GET.get('anterior')
 
-    print(filtro)
-    file = file_dir + ubicacion + "\\Get_Info_" + ubicacion + filtro + ".json"
+    file = ""
+    geofile = ""
 
-    print(file)
-    geofile = GEOJSON_Directory + ubicacion + "\\GeoJson" + filtro + ".geojson"
+    if ubicacion != 'Region':
+        file = file_dir + ubicacion + "\\Get_Info_" + ubicacion + filtro + ".json"
+        geofile = GEOJSON_Directory + ubicacion + "\\GeoJson" + filtro + ".geojson"
 
-    print(geofile)
+    else:
+        file = file_dir + "Get_Info_Region.json"
+        geofile = GEOJSON_Directory + "regioncenso2010.geojson"
+
     censo_data = None
     with open(file) as f:
         censo_data = ujson.loads(f.read())
@@ -43,11 +51,9 @@ def INFO_Ubicacion(request):
     with open(geofile) as f:
         geo_data = ujson.loads(f.read())
 
+
     data = dict(Censo=censo_data,
                 Geo=geo_data)
-
-
-    print(geo_data["features"][0]["properties"])
     return JsonResponse(data, safe=False)
 
 

@@ -79,9 +79,9 @@ DATABASES = {
     'default': {
         'NAME': 'Censo2010ONE',
         'ENGINE': 'sql_server.pyodbc',
-        'HOST': 'LAPTOP-TH9VQ1KD',
-        'USER': 'Sirius',
-        'PASSWORD': 'Juan2009',
+        'HOST': 'SERVER',
+        'USER': 'USER',
+        'PASSWORD': 'PASS',
 
         'OPTIONS': {
             'driver': 'ODBC Driver 13 for SQL Server',
